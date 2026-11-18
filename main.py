@@ -1,6 +1,5 @@
 import pandas as pd
 from pathlib import Path
-from sklearn.model_selection import train_test_split
 from sklearn.base import clone
 from src.modelos import CONFIGURACOES, criar_pipeline
 from sklearn.metrics import f1_score, make_scorer, classification_report, confusion_matrix
