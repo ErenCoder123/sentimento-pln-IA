@@ -19,8 +19,6 @@
 ---
 
 ## 1. Pré-processamento
-*Quais decisões você tomou (minúsculas, pontuação, números, stopwords)? Qual o tamanho do vocabulário com e sem remoção de stopwords? O que você fez com a palavra "não" e por quê?*
-
 tomei a decisão de padronizar as palavras, preservando a acentuação, ex: ÓTIMO, Ótimo e ótimo são a mesma palavra.
 
 o código troca todas as pontuações e número por espaço, simplificando a contagem de palavras.
@@ -30,72 +28,76 @@ vocabulario com e sem, respectivamente: 425 e 413, sendo utilizado 20 stopwodrs.
 a palavra "NÃO" não é incluida nos stopwords pois mudaria completamente a lógica, pense em: eu GOSTO e eu NÃO gosto, muda completamente.
 
 ## 2. BoW vs. TF-IDF
-*Compare as quatro configurações levando em conta o desvio padrão. As diferenças são rele**vantes? Qual você escolheu e com base em quê? Explique a diferença conceitual entre as duas representações**.*
 
-com stopwords mantidas, o F1 médio foi 84,01% no BoW (A) e 81,89% no TF-IDF (B). Os desvios foram 7,55 e 9,00 pontos percentuais.
+Com stopwords mantidas, o F1 médio foi 84,01% em A e 81,89% em B, com desvios de 7,55 e 9,00 pontos percentuais.
 
-com stopwords removidas, o F1 médio foi 85,46% no BoW (C) e 82,88% no TF-IDF (D). Os desvios foram 7,85 e 8,89 pontos percentuais.
+Com stopwords removidas, o F1 médio foi 85,06% em C e 84,62% em D, com desvios de 7,88 e 9,18 pontos percentuais.
 
-o BoW teve a maior media nos dois pares. A maior diferença entre as medias foi de 3,57 pontos.
+O BoW teve a maior média nos dois pares. A distância entre o maior e o menor F1 médio foi de 3,17 pontos percentuais, pequena diante da variação entre os folds.
+
+Escolhi C porque ela teve o maior F1 médio da classe positiva na validação cruzada.
+
+O BoW conta quantas vezes cada palavra aparece. O TF-IDF dá mais peso a palavras que aparecem no texto e são menos comuns no conjunto de treino.
 
 a vantagem foi modesta nesse experimento. A configuracao C foi escolhida por ter o maior F1 medio da classe positiva na validacao cruzada.
 
 o BoW conta quantas vezes cada palavra aparece. O TF-IDF pondera as ocorrencias, dando mais peso a palavras que aparecem no texto e sao menos comuns no conjunto de treino.
 
 ## 3. Avaliação no teste
-*Mostre a matriz de confusão e interprete precisão, recall e F1 de cada classe. Para uma loja, qual erro é mais grave: classificar uma reclamação como elogio ou o contrário? Por que a acurácia é menos enganosa aqui do que no exemplo de fraude da Aula 8?*
 
-na ordem negativo, positivo, a matriz foi [[26, 7], [4, 28]], com as classes reais nas linhas e as previstas nas colunas.
-a diagonal soma 54 acertos em 65 avaliacoes, o que dá 83,08% de acuracia.
+A matriz foi [[25, 8], [3, 29]], com classes reais nas linhas e previstas nas colunas, na ordem negativo, positivo.
 
-na classe negativa, a precisao foi 86,67% (26 de 30 previsoes negativas), o recall foi 78,79% (26 de 33 casos reais) e o F1 foi 82,54%.
+A diagonal soma 54 acertos em 65 avaliações, o que dá 83,08% de acurácia.
 
-na classe positiva, a precisao foi 80,00% (28 de 35 previsoss positivas), o recall foi 87,50% (28 de 32 casos reais) e o F1 foi 83,58%. O F1 combina precisao e recall.
+Na classe negativa, 25 de 28 previsões estavam corretas (89,29% de precisão) e 25 de 33 casos reais foram encontrados (75,76% de recall). O F1 foi 81,97%.
 
-para uma loja que usa o modelo para encaminhar reclamações, classificar uma reclamação como elogio é mais grave. Isso aconteceu 7 vezes no teste e poderia deixar clientes sem atendimento.
+Na classe positiva, foram 29 de 37 previsões corretas (78,38% de precisão) e 29 de 32 casos reais encontrados (90,62% de recall). O F1 foi 84,06%.
 
-nao lembro qual o exemplo de fraude da Aula 8 e não encontrei no aula.
+Para uma loja que usa o modelo para encaminhar reclamações, o erro mais grave é marcar uma reclamação como elogio. Isso ocorreu 8 vezes e poderia deixar clientes sem atendimento.
+
+O teste tinha 33 negativas e 32 positivas. Prever sempre a classe majoritária daria só 50,77% de acurácia. Quando fraudes são raras, prever sempre que a transação é legítima pode dar acurácia alta e deixar passar todas as fraudes.
+
+Não lembro qual o exemplo de fraude da Aula 8 e não encontrei no aula.
 
 ## 4. Validação cruzada vs. divisão única
-*Por que a validação cruzada é mais confiável do que um único conjunto de teste para comparar configurações? Por que a escolha não pode ser feita olhando o teste? O que seria vazamento de dados neste trabalho e como você o evitou?*
 
-a validacao cruzada dividiu as 195 avaliacoes de treino em cinco folds, com 156 exemplos para ajuste e 39 para validação a cada rodada.
+A validação cruzada usou as 195 avaliações de treino em cinco rodadas. Em cada uma, 156 avaliações foram usadas para ajuste e 39 para validação.
 
-as quatro configuracees passaram pelas mesmas divisoes. Isso permitiu comparar as medias e observar quanto os resultados variaram entre os folds.
+As quatro configurações passaram pelas mesmas divisões. A média reduz a influência de uma divisão específica, e o desvio mostra quanto o desempenho variou.
 
-as 65 avaliações de teste ficaram reservadas para medir o desempenho da configuração escolhida. uasr elas para decidir a vencedora favoreceria a configuracao que se saiu melhor naquela amostra específica.
+As 65 avaliações de teste ficaram reservadas para a avaliação final. Escolher o modelo olhando o teste poderia favorecer a configuração que teve sorte naquela amostra.
 
-haveria vazamento se o vocabulario ou o IDF fosse ajustado usando textos da validaçao ou do teste.
+Haveria vazamento se o vocabulário ou o IDF fosse calculado usando textos da validação ou do teste.
 
-a pipeline evitou isso ao ajustar o vetorizador e a regressao apenas com os exemplos de treino de cada fold.
+A Pipeline ajustou o vetorizador e a Regressão Logística só com a parte de treino de cada fold.
 
 ## 5. Análise de erros e palavras influentes
-*Escolha 3 textos de `erros.csv` e explique por que o modelo pode ter errado. Observe as 10 palavras mais influentes de cada classe: há alguma que não carrega sentimento por si só (ex.: palavra funcional ou de domínio)? O que isso diz sobre o que o modelo realmente aprendeu?*
 
-“Ficou feio na sala, a cor é bem diferente da foto” recebeu positivo com 62,22%. Bem intensifica diferente nessa frase e tem peso positivo de +0,954 no modelo.
+“Ficou feio na sala, a cor é bem diferente da foto” recebeu positivo com 64,14%. Feio ficou fora do vocabulário, e bem, que intensifica diferente nessa frase, teve peso positivo de +0,944.
 
-“Cheguei animado, mas me arrependi, tudo estava sujo” recebeu positivo com 64,26%. O mas muda o sentido entre as duas partes, e o BoW conta as palavras separadamente.
+“Cheguei animado, mas me arrependi, tudo estava sujo” recebeu positivo com 66,28%. O BoW trata as palavras separadamente. Arrependi ficou fora do vocabulário e tudo teve peso positivo de +0,706.
 
-“Ficou lindo na sala, combinou perfeitamente com os móveis” recebeu negativo com 57,96%. Uma hipótese é que perfeitamente e perfeito são tratados como palavras distintas. O peso de +0,790 pertence a perfeito.
+“O sabor é maravilhoso e as porções são generosas” recebeu negativo com 55,52%. Maravilhoso contribuiu a favor de positivo, mas generosas ficou fora do vocabulário e palavras como sabor e porções tiveram peso negativo.
 
-Entre os termos influentes, bastante (+2,257) é um intensificador, e dinheiro (−0,673) pode aparecer tanto em elogios quanto em reclamações.
+Bastante (+2,196) é um intensificador, e dinheiro (−0,595) pode aparecer tanto em elogios quanto em reclamações.
 
-Esses pesos mostram associações aprendidas nos dados de treino. Eles ajudam a levantar hipóteses sobre os erros, pois o modelo combina os pesos de várias palavras para fazer uma previsão.
+Esses pesos mostram que o modelo aprendeu associações entre palavras e rótulos nos dados de treino. O sentido de cada palavra depende da frase em que aparece.
+
 
 ## 6. Casos difíceis e limitações
 *Com base em `casos_dificeis_predicoes.csv`, como o modelo se saiu em negação, ironia e frases mistas? Explique por que BoW/TF-IDF têm essa limitação, proponha duas melhorias (cite técnicas vistas na Aula 11) e discuta duas limitações do dataset e um risco de usar este modelo em produção.*
 
-O modelo acertou 2 de 4 casos de negação, 2 de 3 de ironia e 7 de 10 entre as frases com rótulo esperado positivo ou negativo.
+O modelo acertou 2 de 4 casos de negação, 2 de 3 casos de ironia e 7 de 10 frases com rótulo esperado positivo ou negativo.
 
-As duas frases mistas receberam positivo. A frase neutra, “Chegou ontem”, recebeu negativo, com 47,30% de probabilidade de positivo. Esses três casos foram analisados qualitativamente porque o modelo só prevê duas classes.
+As duas frases mistas receberam positivo. A neutra, “Chegou ontem”, recebeu negativo, com 49,64% de probabilidade de positivo. Analisei esses três casos separadamente porque o modelo só prevê duas classes.
 
-Com palavras isoladas, BoW e TF-IDF perdem a ordem e o contexto. Por exemplo, “Que ótimo, o produto chegou quebrado” recebeu positivo com 81,93% de probabilidade de positivo.
+Usando palavras isoladas, BoW e TF-IDF perdem a ordem e o contexto. “Que ótimo, o produto chegou quebrado” recebeu positivo com 83,53% de probabilidade de positivo.
 
-Uma melhoria seria testar bigramas, que permitem representar sequências como não gostei. Outra seria testar um léxico com tratamento de negação, que ajusta a polaridade das palavras no trecho negado.
+Uma melhoria seria testar bigramas para representar sequências como não gostei. Outra seria testar um léxico com regras de negação para ajustar a polaridade das palavras negadas.
 
-A amostra tem apenas 260 avaliações, e parte delas foi gerada por padrões. Frases parecidas no treino e no teste podem favorecer resultados mais altos do que os obtidos com avaliações reais.
+A amostra tem 260 avaliações, e parte das frases foi gerada por padrões. Isso pode favorecer resultados mais altos do que os obtidos com avaliações reais e mais variadas.
 
-Em produção, um risco seria deixar reclamações sem atendimento. No teste, 7 das 33 avaliações negativas foram classificadas como positivas.
+Em produção, uma reclamação marcada como elogio poderia ficar sem atendimento. No teste, 8 das 33 avaliações negativas receberam o rótulo positivo.
 
 *---*
 
@@ -104,4 +106,4 @@ Em produção, um risco seria deixar reclamações sem atendimento. No teste, 7 
 Marque uma opção e complete:
 
 - [ ] Não usei IA generativa em nenhuma parte deste trabalho.
-- [x] Usei IA generativa **somente** para: pesquisar erros e para resolução de problemas, sem geração de códigos ou o relatório. (não é permitido gerar código ou relatório).
+- [x] Usei IA generativa **somente** para: pesquisar erros e para resolução de problemas, sem geração de códigos ou o relatório. Também utilizei para formatação, pois escrevi o relatório a mil por hora e parecia que português era minha 4° lingua.
