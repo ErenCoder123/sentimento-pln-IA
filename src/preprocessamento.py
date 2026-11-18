@@ -1,7 +1,6 @@
 from unicodedata import normalize
 
-STOPWORDS = {"a", "o", "as", "os", "um", "uma", "uns", "umas"}
-
+STOPWORDS = {"a", "o", "as", "os", "um", "uma", "uns", "umas", "de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas", "ao", "aos"}
 
 def preprocessar_texto(texto: str, remover_stopwords: bool = False) -> str:
     texto_normalizado = normalize("NFC", texto.lower())

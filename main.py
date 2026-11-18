@@ -3,7 +3,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.base import clone
 from src.modelos import CONFIGURACOES, criar_pipeline
-from sklearn.metrics import f1_score, make_scorer
+from sklearn.metrics import f1_score, make_scorer, classification_report, confusion_matrix
 from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
 
 
@@ -121,3 +121,84 @@ config_vencedora = ranking_cv.iloc[0]["config"]
 
 # print(ranking_cv[["config", "f1_cv_media", "acc_cv_media"]].to_string(index=False))
 print(f"Configuração vencedora pela validação cruzada: {config_vencedora}")
+
+modelo_final = pipelines[config_vencedora]
+modelo_final.fit(textos_treino, sentimentos_treino)
+previsoes_teste = modelo_final.predict(textos_teste)
+
+classes = ["negativo", "positivo"]
+matriz = confusion_matrix(sentimentos_teste, previsoes_teste, labels=classes)
+
+pd.DataFrame(matriz, index=classes, columns=classes).to_csv(
+    pasta_resultados / "matriz_confusao.csv",
+    index_label="real",
+    encoding="utf-8",
+)
+
+relatorio = classification_report(
+    sentimentos_teste,
+    previsoes_teste,
+    labels=classes,
+    digits=4,
+    zero_division=0,
+)
+(pasta_resultados / "relatorio_classificacao.txt").write_text(
+    relatorio,
+    encoding="utf-8",
+)
+
+probabilidades_previstas = modelo_final.predict_proba(textos_teste).max(axis=1)
+
+tabela_teste = pd.DataFrame({
+    "texto": textos_teste.to_numpy(),
+    "real": sentimentos_teste.to_numpy(),
+    "previsto": previsoes_teste,
+    "probabilidade": probabilidades_previstas,
+})
+
+erros = tabela_teste.loc[tabela_teste["real"] != tabela_teste["previsto"]]
+erros.to_csv(pasta_resultados / "erros.csv", index=False, encoding="utf-8")
+
+vetorizador_final = modelo_final.named_steps["vetorizador"]
+classificador_final = modelo_final.named_steps["classificador"]
+
+pesos = pd.DataFrame({
+    "palavra": vetorizador_final.get_feature_names_out(),
+    "coeficiente": classificador_final.coef_[0],
+})
+
+palavras_positivas = pesos.nlargest(10, "coeficiente").assign(
+    sentimento=classificador_final.classes_[1]
+)
+palavras_negativas = pesos.nsmallest(10, "coeficiente").assign(
+    sentimento=classificador_final.classes_[0]
+)
+
+palavras_influentes = pd.concat(
+    [palavras_positivas, palavras_negativas],
+    ignore_index=True,
+)
+palavras_influentes.to_csv(
+    pasta_resultados / "palavras_influentes.csv",
+    columns=["palavra", "sentimento", "coeficiente"],
+    index=False,
+    encoding="utf-8",
+)
+
+casos_dificeis = pd.read_csv("data/casos_dificeis.csv")
+textos_casos = casos_dificeis["texto"]
+
+indice_positivo = list(modelo_final.classes_).index("positivo")
+probabilidades_casos = modelo_final.predict_proba(textos_casos)
+
+resultado_casos = casos_dificeis[["texto", "tipo", "sentimento_esperado"]].rename(
+    columns={"sentimento_esperado": "esperado"}
+)
+resultado_casos["previsto"] = modelo_final.predict(textos_casos)
+resultado_casos["probabilidade_positivo"] = probabilidades_casos[:, indice_positivo]
+
+resultado_casos.to_csv(
+    pasta_resultados / "casos_dificeis_predicoes.csv",
+    index=False,
+    encoding="utf-8",
+)
